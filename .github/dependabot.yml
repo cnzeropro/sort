@@ -1,0 +1,33 @@
+# Dependabot 自动依赖升级配置
+# 文档：https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  # Maven 依赖与插件：每周检查；minor/patch 合并为一组 PR，major 单独评审（库项目保守策略）
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+    groups:
+      maven-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+    open-pull-requests-limit: 10
+
+  # GitHub Actions：CI 中 action 以 SHA 固定，由 Dependabot 负责 SHA 与版本的例行升级
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch
