@@ -79,18 +79,20 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- 代码格式化：Google Java Format AOSP 风格，check 目标默认绑定 verify 阶段 -->
+      <!-- 代码卫生：与 JDK 版本无关的格式化检查（GJF 依赖 javac 内部 API，跨 JDK 行为不一致），check 目标默认绑定 verify 阶段 -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>3.9.0</version>
         <configuration>
           <java>
-            <googleJavaFormat>
-              <version>1.36.1</version>
-              <style>AOSP</style>
-            </googleJavaFormat>
+            <!-- 静态导入在前，其余导入归入隐式末组，组间空行分隔（与 AOSP 风格一致） -->
+            <importOrder>
+              <order>\#</order>
+            </importOrder>
             <removeUnusedImports />
+            <trimTrailingWhitespace />
+            <endWithNewline />
           </java>
         </configuration>
         <executions>
