@@ -1,646 +1,689 @@
 package org.zero.sort;
 
+
 /**
- * 排序算法类
+ * 排序工具类
+ * <p>
+ * 提供六大经典排序算法（冒泡、选择、插入、希尔、归并、快速排序），支持：
+ * <ul>
+ *   <li>任意 {@link Comparable} 对象数组（含父类实现 Comparable 的场景）；</li>
+ *   <li>全部数字原始类型：byte / short / int / long / float / double / char。</li>
+ * </ul>
  *
- * <p>C：比较次数
+ * <h2>使用示例</h2>
+ * <pre>{@code
+ * // 对象数组：默认快速排序
+ * Integer[] a = {5, 3, 8, 1, 9};
+ * Sort.sort(a);
  *
- * <p>M：移动次数
+ * // 指定算法 + 区间 [1, 4)：只排 a[1]..a[3]
+ * Sort.mergeSort(a, 1, 4);
+ *
+ * // 原始类型
+ * int[] b = {5, 3, 8, 1, 9};
+ * Sort.sort(b);                              // 默认快速排序
+ * Sort.sort(b, Algorithm.SHELL, 1, 4);      // 指定算法 + 区间
+ * }</pre>
+ *
+ * <h2>区间约定</h2>
+ * 所有带 {@code fromIndex}/{@code toIndex} 的方法遵循 JDK 惯例：
+ * 区间为 <b>[fromIndex, toIndex)</b> 左闭右开，与 {@link java.util.Arrays#sort}、
+ * {@link String#substring} 一致。
+ *
+ * <h2>异常约定</h2>
+ * 与 {@link java.util.Arrays} 一致：
+ * <ul>
+ *   <li>空数组合法，排序为空操作；</li>
+ *   <li>null 数组、排序区间内包含 null 元素（对象数组）→ {@link NullPointerException}
+ *       （区间外的 null 不影响）；</li>
+ *   <li>非法索引（fromIndex &lt; 0、toIndex &gt; 数组长度、fromIndex &gt; toIndex）
+ *       → {@link IndexOutOfBoundsException}；</li>
+ *   <li>null 算法 → {@link NullPointerException}。</li>
+ * </ul>
+ *
+ * <h2>比较语义</h2>
+ * <ul>
+ *   <li>对象：使用 {@link Comparable#compareTo} 的自然顺序；</li>
+ *   <li>float / double：使用 {@link Float#compare} / {@link Double#compare} 的全序语义——
+ *       NaN 排在最后（-0.0 &lt; 0.0），与 {@link java.util.Arrays#sort(double[])} 一致；</li>
+ *   <li>char：按无符号 16 位整数比较（'\u0000' 最小，'\uFFFF' 最大）。</li>
+ * </ul>
+ *
+ * <h2>Java 版本与 Multi-Release</h2>
+ * 最低支持 Java 8。本库以 Multi-Release JAR 打包：Java 9+ 运行时会自动加载
+ * {@code META-INF/versions/9} 下的版本化类（如区间校验委托 JDK 的
+ * {@code java.util.Objects.checkFromToIndex}），Java 8 使用基础实现，行为完全一致。
  *
  * @author Zero
+ * @see Algorithm
  */
-public class Sort {
+public final class Sort {
 
-    private Sort() {}
+    private Sort() {
+    }
+
+    // ==================== 对象数组（Comparable）====================
 
     /**
-     * 冒泡排序算法类
+     * 使用默认算法（{@link Algorithm#QUICK} 快速排序）对整个数组排序
      *
-     * <p><b><i>稳定</i></b> 排序算法
-     *
-     * <p>Cmin = n-1;
-     *
-     * <p>Mmin = 0;
-     *
-     * <p>Cmin + Mmin = n-1;
-     *
-     * <p>根据大O推导法则，最好时间复杂度为O(n)
-     *
-     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     *
-     * <p>Mmax = 3(n-1)+(n-2)+...+2+1 =3n(n-1)/2;
-     *
-     * <p>Cmax + Mmax = 2n(n-1);
-     *
-     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
-     *
-     * <p>平均时间复杂度为<b>O(n^2)</b>
-     *
-     * @author Zero
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
+     * @throws NullPointerException      数组为 null 或区间内包含 null 元素
+     * @throws IndexOutOfBoundsException 区间非法
      */
-    public static class Bubble {
-        private Bubble() {}
+    public static <T extends Comparable<? super T>> void sort(T[] a) {
+        sort(a, Algorithm.QUICK);
+    }
 
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
+    /**
+     * 使用指定算法对整个数组排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null，或区间内包含 null 元素
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static <T extends Comparable<? super T>> void sort(T[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
 
-            for (int i = endIndex; i > startIndex; i--) {
-                for (int j = startIndex; j < i; j++) {
-                    // 如果索引j比索引j+1处的值的大
-                    if (compare(a[j], a[j + 1])) {
-                        // 交换索引j和索引j+1处的值
-                        swap(a, j, j + 1);
-                    }
-                }
-            }
+    /**
+     * 使用默认算法（{@link Algorithm#QUICK}）对区间 [fromIndex, toIndex) 排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null 或区间内包含 null 元素
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static <T extends Comparable<? super T>> void sort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对区间 [fromIndex, toIndex) 排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null，或区间内包含 null 元素
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static <T extends Comparable<? super T>> void sort(
+            T[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        ArrayChecks.requireArray(a);
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
         }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        ArrayChecks.requireNoNullInRange(a, fromIndex, toIndex);
+        sortValidated(a, algorithm, fromIndex, toIndex);
+    }
 
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
+    /**
+     * 分派到具体算法实现（入参已完成校验）
+     */
+    private static <T extends Comparable<? super T>> void sortValidated(
+            T[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        switch (algorithm) {
+            case BUBBLE:
+                GenericSorts.bubble(a, fromIndex, toIndex);
+                break;
+            case SELECTION:
+                GenericSorts.selection(a, fromIndex, toIndex);
+                break;
+            case INSERTION:
+                GenericSorts.insertion(a, fromIndex, toIndex);
+                break;
+            case SHELL:
+                GenericSorts.shell(a, fromIndex, toIndex);
+                break;
+            case MERGE:
+                GenericSorts.merge(a, fromIndex, toIndex);
+                break;
+            case QUICK:
+                GenericSorts.quick(a, fromIndex, toIndex);
+                break;
+            default:
+                throw new IllegalStateException("Unknown algorithm: " + algorithm);
         }
     }
 
     /**
-     * 选择排序算法类
+     * 冒泡排序：稳定，最好 O(n)，平均/最坏 O(n^2)，空间 O(1)
      *
-     * <p><b><i>不稳定</i></b> 排序算法
-     *
-     * <p>Cmin = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     *
-     * <p>Mmin = 0;
-     *
-     * <p>Cmin + Mmin = n(n-1)/2;
-     *
-     * <p>根据大O推导法则，最好时间复杂度为O(n^2)
-     *
-     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     *
-     * <p>Mmax = n-1; Cmax + Mmax = (n^2+n-2)/2;
-     *
-     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
-     *
-     * <p>平均时间复杂度为<b>O(n^2)</b>
-     *
-     * @author Zero
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
      */
-    public static class Selection {
-        private Selection() {}
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            for (int i = startIndex; i < endIndex; i++) {
-                // 记录最小元素所在的索引，默认为参与排序的第一个元素所在位置
-                int minIndex = i;
-                for (int j = i + 1; j <= endIndex; j++) {
-                    // 比较最小元素索引处的值和j索引处的值
-                    if (compare(a[minIndex], a[j])) {
-                        minIndex = j;
-                    }
-                }
-                // 交换最小元素索引处的值和i索引处的值
-                if (minIndex != i) {
-                    swap(a, i, minIndex);
-                }
-            }
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
-        }
+    public static <T extends Comparable<? super T>> void bubbleSort(T[] a) {
+        sort(a, Algorithm.BUBBLE);
     }
 
     /**
-     * 插入排序算法类
+     * 冒泡排序（区间版）：对 [fromIndex, toIndex) 排序
      *
-     * <p><b><i>稳定</b></i> 排序算法
-     *
-     * <p>Cmin = n-1;
-     *
-     * <p>Mmin = 0;
-     *
-     * <p>Cmin + Mmin = n-1;
-     *
-     * <p>根据大O推导法则，最好时间复杂度为O(n)
-     *
-     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     *
-     * <p>Mmax = 3(n-1)+(n-2)+...+2+1 = 3n(n-1)/2;
-     *
-     * <p>Cmax + Mmax = 2n(n-1);
-     *
-     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
-     *
-     * <p>平均时间复杂度为<b>O(n^2)</b>
-     *
-     * @author Zero
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
      */
-    public static class Insertion {
-        private Insertion() {}
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            for (int i = startIndex + 1; i <= endIndex; i++) {
-                for (int j = i; j > startIndex && compare(a[j - 1], a[j]); j--) {
-                    swap(a, j - 1, j);
-                }
-            }
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
-        }
+    public static <T extends Comparable<? super T>> void bubbleSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.BUBBLE, fromIndex, toIndex);
     }
 
     /**
-     * 希尔排序算法类
+     * 选择排序：不稳定，最好/平均/最坏均为 O(n^2)，空间 O(1)
      *
-     * <p>希尔排序是插入排序改良版，又称增量排序
-     *
-     * <p><b><i>不稳定</b></i> 排序算法
-     *
-     * <p>希尔排序的分析是一个复杂的问题，它的时间是所取“增量”序列决定的，目前好像还没有严谨的数学分析
-     *
-     * <p>时间复杂度的范围是：O(n^1.3)~O(n^2)
-     *
-     * <p>平均时间复杂度大致是：<b>O(n^1.5)</b>
-     *
-     * @author Zero
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
      */
-    public static class Shell {
-        /**
-         * 严谨增量序列的希尔排序
-         *
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            int increment = 1;
-            while (increment < (endIndex - startIndex + 1) / 2) {
-                increment = 2 * increment + 1;
-            }
-
-            // increment >= 1
-            while (increment > 0) {
-                for (int i = startIndex + increment; i <= endIndex; i++) {
-                    for (int j = i;
-                            (j >= startIndex + increment) && compare(a[j - increment], a[j]);
-                            j -= increment) {
-                        swap(a, j - increment, j);
-                    }
-                }
-                increment /= 2;
-            }
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
-        }
-
-        /**
-         * 普通增量序列的希尔排序（对整个数组排序）
-         *
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void generalSort(T[] a) {
-            check(a);
-
-            generalSort(a, 0, a.length - 1);
-        }
-
-        /**
-         * 普通增量序列的希尔排序
-         *
-         * <p>运行时间更长
-         *
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void generalSort(
-                T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            for (int increment = (endIndex - startIndex + 1) / 2; increment > 0; increment /= 2) {
-                for (int i = startIndex + increment; i <= endIndex; i++) {
-                    for (int j = i;
-                            (j >= startIndex + increment) && compare(a[j - increment], a[j]);
-                            j -= increment) {
-                        swap(a, j - increment, j);
-                    }
-                }
-            }
-        }
+    public static <T extends Comparable<? super T>> void selectionSort(T[] a) {
+        sort(a, Algorithm.SELECTION);
     }
 
     /**
-     * 归并排序算法类
+     * 选择排序（区间版）：对 [fromIndex, toIndex) 排序
      *
-     * <p><b><i>稳定</i></b> 排序算法
-     *
-     * <p>最好时间复杂度O(n)
-     *
-     * <p>最坏时间复杂度O(nlogn)
-     *
-     * <p>平均时间复杂度<b>O(nlogn)</b>
-     *
-     * @author Zero
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
      */
-    public static class Merge {
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            sortRec(a, startIndex, endIndex);
-        }
-
-        /**
-         * 归并排序递归实现
-         *
-         * <p>公共入口已完成校验，递归过程不再重复校验，避免每层递归都全数组扫描
-         *
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        private static <T extends Comparable<T>> void sortRec(T[] a, int startIndex, int endIndex) {
-            if (endIndex > startIndex) {
-                int midIndex = startIndex + (endIndex - startIndex) / 2;
-                sortRec(a, startIndex, midIndex);
-                sortRec(a, midIndex + 1, endIndex);
-                merge(a, startIndex, midIndex, endIndex);
-            }
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param low 起始位置
-         * @param mid 中间位置
-         * @param high 结束位置
-         */
-        private static <T extends Comparable<T>> void merge(T[] a, int low, int mid, int high) {
-            Object[] temp = new Comparable[a.length];
-            // p1、p2是检测指针，i是存放指针
-            int p1 = low, p2 = mid + 1, i = low;
-            // 把较小的数先移到新数组中
-            while (p1 <= mid && p2 <= high) {
-                if (compare(a[p2], a[p1])) {
-                    temp[i++] = a[p1++];
-                } else {
-                    temp[i++] = a[p2++];
-                }
-            }
-            // 把左边剩余的数移入数组
-            while (p1 <= mid) {
-                temp[i++] = a[p1++];
-            }
-            // 把右边边剩余的数移入数组
-            while (p2 <= high) {
-                temp[i++] = a[p2++];
-            }
-            // 把新数组中的数覆盖a数组
-            for (int j = low; j <= high; j++) {
-                a[j] = (T) temp[j];
-            }
-        }
+    public static <T extends Comparable<? super T>> void selectionSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.SELECTION, fromIndex, toIndex);
     }
 
     /**
-     * 快速排序算法类
+     * 插入排序：稳定，最好 O(n)，平均/最坏 O(n^2)，空间 O(1)；适合接近有序的输入
      *
-     * <p><b><i>不稳定</i></b> 排序算法
-     *
-     * <p>最好时间复杂度O(nlog2n)
-     *
-     * <p>最坏时间复杂度O(n^2)
-     *
-     * <p>平均时间复杂度<b>O(nlog2n)</b>
-     *
-     * @author Zero
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
      */
-    public static class Quick {
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
-            check(a);
-            check(a, startIndex, endIndex);
-
-            sortRec(a, startIndex, endIndex);
-        }
-
-        /**
-         * 快速排序递归实现
-         *
-         * <p>公共入口已完成校验，递归过程不再重复校验，避免每层递归都全数组扫描
-         *
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         * @param endIndex 结束索引
-         */
-        private static <T extends Comparable<T>> void sortRec(T[] a, int startIndex, int endIndex) {
-            if (startIndex < endIndex) {
-                int pivot = partition(a, startIndex, endIndex);
-                if (pivot - 1 > startIndex) {
-                    sortRec(a, startIndex, pivot - 1);
-                }
-                if (pivot + 1 < endIndex) {
-                    sortRec(a, pivot + 1, endIndex);
-                }
-            }
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param startIndex 起始索引
-         */
-        public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
-            check(a);
-
-            sort(a, startIndex, a.length - 1);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param endIndex 结束索引
-         */
-        public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
-            sort(a, 0, endIndex);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         */
-        public static <T extends Comparable<T>> void sort(T[] a) {
-            sortBack(a, 0);
-        }
-
-        /**
-         * @param <T> 实现了Comparable接口的类型
-         * @param a 待排序数组
-         * @param low 开始位置
-         * @param high 终止位置
-         * @return 中间元素所在位置
-         */
-        private static <T extends Comparable<T>> int partition(T[] a, int low, int high) {
-            T key = a[low];
-            while (low < high) {
-                // 当队尾的元素大于等于基准数据时，向后挪动high指针
-                while (low < high && compare(a[high], key)) {
-                    high--;
-                }
-                // 当队尾元素小于key时，需要将其赋值给a[low]
-                a[low] = a[high];
-                // 当队首元素小于等于tmp时，向前挪动low指针
-                while (low < high && compare(key, a[low])) {
-                    low++;
-                }
-                // 当队首元素大于key时，需要将其赋值给a[high]
-                a[high] = a[low];
-            }
-            // low位置的值并不是key，所以需要将key赋值给a[low]
-            a[low] = key;
-            // 跳出循环时low和high相等，此时的low或high就是tmp的正确索引位置
-            return low;
-        }
+    public static <T extends Comparable<? super T>> void insertionSort(T[] a) {
+        sort(a, Algorithm.INSERTION);
     }
 
     /**
-     * 比较大小
+     * 插入排序（区间版）：对 [fromIndex, toIndex) 排序
      *
-     * @param <T> 实现了Comparable接口的类型
-     * @param o1 元素1
-     * @param o2 元素2
-     * @return 如果o1比o2大或相等，返回true，反之则反
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
      */
-    public static <T extends Comparable<T>> boolean compare(T o1, T o2) {
-        return o1.compareTo(o2) >= 0;
+    public static <T extends Comparable<? super T>> void insertionSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.INSERTION, fromIndex, toIndex);
     }
 
     /**
-     * 交换数组a的i，j位置元素
+     * 希尔排序：不稳定，Knuth 增量序列，最好 O(n log n)，平均约 O(n^1.25)，最坏 O(n^2)，空间 O(1)
      *
-     * @param <T> 实现了Comparable接口的类型
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
+     */
+    public static <T extends Comparable<? super T>> void shellSort(T[] a) {
+        sort(a, Algorithm.SHELL);
+    }
+
+    /**
+     * 希尔排序（区间版）：对 [fromIndex, toIndex) 排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     */
+    public static <T extends Comparable<? super T>> void shellSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.SHELL, fromIndex, toIndex);
+    }
+
+    /**
+     * 归并排序：稳定，最好/平均/最坏均保证 O(n log n)，空间 O(n)
+     *
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
+     */
+    public static <T extends Comparable<? super T>> void mergeSort(T[] a) {
+        sort(a, Algorithm.MERGE);
+    }
+
+    /**
+     * 归并排序（区间版）：对 [fromIndex, toIndex) 排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     */
+    public static <T extends Comparable<? super T>> void mergeSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.MERGE, fromIndex, toIndex);
+    }
+
+    /**
+     * 快速排序：不稳定，三数取中选枢轴，最好/平均 O(n log n)，最坏 O(n^2)，空间 O(log n)
+     * <p>
+     * 有序、逆序、全相等输入均不退化，是无算法参数入口 {@code Sort.sort(a)} 使用的默认算法。
+     *
+     * @param <T> 实现了 Comparable 的类型（允许父类实现）
+     * @param a   待排序数组
+     */
+    public static <T extends Comparable<? super T>> void quickSort(T[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 快速排序（区间版）：对 [fromIndex, toIndex) 排序
+     *
+     * @param <T>       实现了 Comparable 的类型（允许父类实现）
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     */
+    public static <T extends Comparable<? super T>> void quickSort(T[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    // ==================== 原始类型 ====================
+    // 全部数字原始类型 × 4 种重载；float/double 使用 Float.compare/Double.compare 全序（NaN 最后），
+    // char 按无符号 16 位整数比较。行为约定与对象数组版本一致。
+
+    /**
+     * 使用默认算法（快速排序）对整个 int 数组排序
+     *
      * @param a 待排序数组
-     * @param i 位置i
-     * @param j 位置j
+     * @throws NullPointerException 数组为 null
      */
-    public static <T> void swap(T[] a, int i, int j) {
-        T tmp = a[i];
-        a[i] = a[j];
-        a[j] = tmp;
+    public static void sort(int[] a) {
+        sort(a, Algorithm.QUICK);
     }
 
     /**
-     * 检查传入的数组是否为NULL或数组中是否包含NULL
+     * 使用指定算法对整个 int 数组排序
      *
-     * @param <T> 实现了Comparable接口的类型
-     * @param a 待排序数组
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
      */
-    private static <T> void check(T[] a) {
-        if (a == null) {
-            throw new IllegalArgumentException("Array must not be null");
-        }
-
-        for (int i = 0; i < a.length; i++) {
-            if (a[i] == null) {
-                throw new IllegalArgumentException("Array must not contain null elements");
-            }
-        }
+    public static void sort(int[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
     }
 
     /**
-     * 检查传入的参数是否符合要求
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
      *
-     * @param <T> 实现了Comparable接口的类型
-     * @param a 待排序数组
-     * @param startIndex 起始索引
-     * @param endIndex 结束索引
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
      */
-    private static <T> void check(T[] a, int startIndex, int endIndex) {
-        if (a.length == 0) {
-            throw new IllegalArgumentException("Empty array is not supported");
-        }
+    public static void sort(int[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
 
-        if (startIndex < 0) {
-            throw new IllegalArgumentException("startIndex must be >= 0");
+    /**
+     * 使用指定算法对 int 数组区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(int[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
         }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
 
-        if (endIndex >= a.length) {
-            throw new IllegalArgumentException("endIndex must be < array length");
-        }
+    /**
+     * 使用默认算法（快速排序）对整个 long 数组排序
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(long[] a) {
+        sort(a, Algorithm.QUICK);
+    }
 
-        if (startIndex > endIndex) {
-            throw new IllegalArgumentException("startIndex must be <= endIndex");
+    /**
+     * 使用指定算法对整个 long 数组排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(long[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(long[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 long 数组区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(long[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
         }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对整个 double 数组排序
+     * <p>
+     * 使用 {@link Double#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(double[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 使用指定算法对整个 double 数组排序
+     * <p>
+     * 使用 {@link Double#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(double[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 使用 {@link Double#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(double[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 double 数组区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 使用 {@link Double#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(double[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
+        }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对整个 float 数组排序
+     * <p>
+     * 使用 {@link Float#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(float[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 使用指定算法对整个 float 数组排序
+     * <p>
+     * 使用 {@link Float#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(float[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 使用 {@link Float#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(float[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 float 数组区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 使用 {@link Float#compare} 全序：NaN 排在最后，-0.0 &lt; 0.0。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(float[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
+        }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对整个 short 数组排序
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(short[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 使用指定算法对整个 short 数组排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(short[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(short[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 short 数组区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(short[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
+        }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对整个 byte 数组排序
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(byte[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 使用指定算法对整个 byte 数组排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(byte[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(byte[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 byte 数组区间 [fromIndex, toIndex) 排序
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(byte[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
+        }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对整个 char 数组排序
+     * <p>
+     * 按无符号 16 位整数比较：'\u0000' 最小，'\uFFFF' 最大。
+     *
+     * @param a 待排序数组
+     * @throws NullPointerException 数组为 null
+     */
+    public static void sort(char[] a) {
+        sort(a, Algorithm.QUICK);
+    }
+
+    /**
+     * 使用指定算法对整个 char 数组排序
+     * <p>
+     * 按无符号 16 位整数比较：'\u0000' 最小，'\uFFFF' 最大。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(char[] a, Algorithm algorithm) {
+        sort(a, algorithm, 0, a.length);
+    }
+
+    /**
+     * 使用默认算法（快速排序）对区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 按无符号 16 位整数比较：'\u0000' 最小，'\uFFFF' 最大。
+     *
+     * @param a         待排序数组
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组为 null
+     * @throws IndexOutOfBoundsException 区间非法
+     */
+    public static void sort(char[] a, int fromIndex, int toIndex) {
+        sort(a, Algorithm.QUICK, fromIndex, toIndex);
+    }
+
+    /**
+     * 使用指定算法对 char 数组区间 [fromIndex, toIndex) 排序
+     * <p>
+     * 按无符号 16 位整数比较：'\u0000' 最小，'\uFFFF' 最大。
+     *
+     * @param a         待排序数组
+     * @param algorithm 排序算法
+     * @param fromIndex 起始索引（含）
+     * @param toIndex   结束索引（不含）
+     * @throws NullPointerException      数组或 algorithm 为 null
+     * @throws IndexOutOfBoundsException fromIndex &lt; 0、toIndex &gt; 数组长度或 fromIndex &gt; toIndex
+     */
+    public static void sort(char[] a, Algorithm algorithm, int fromIndex, int toIndex) {
+        if (algorithm == null) {
+            throw new NullPointerException("algorithm must not be null");
+        }
+        IndexChecks.checkFromToIndex(fromIndex, toIndex, a.length);
+        PrimitiveDispatcher.sort(a, algorithm, fromIndex, toIndex);
     }
 }

@@ -6,10 +6,10 @@
 
   <groupId>org.zero</groupId>
   <artifactId>sort</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
 
   <name>sort</name>
-  <description>经典排序算法的 Java 实现库</description>
+  <description>经典排序算法的 Java 工具库：Comparable 对象与全部数字原始类型，Java 8 基线 + Multi-Release JAR</description>
   <url>https://github.com/cnzeropro/sort</url>
 
   <licenses>
@@ -22,14 +22,13 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.release>17</maven.compiler.release>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>6.1.3</version>
+      <version>5.14.4</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -56,6 +55,10 @@
           <version>3.5.6</version>
         </plugin>
         <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.5.6</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.5.1</version>
         </plugin>
@@ -66,6 +69,14 @@
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.4</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.12.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.4.0</version>
         </plugin>
         <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
         <plugin>
@@ -78,13 +89,103 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
     <plugins>
-      <!-- 代码卫生：与 JDK 版本无关的格式化检查（GJF 依赖 javac 内部 API，跨 JDK 行为不一致），check 目标默认绑定 verify 阶段 -->
+      <!-- Multi-Release JAR 编译：基础层 release 8；compile-java9 execution 将 src/main/java9 编译到 META-INF/versions/9 -->
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>8</release>
+          <!-- 屏蔽 JDK 26 等新版本对 release 8 的 "obsolete" 警告（仅噪音） -->
+          <compilerArgs>
+            <arg>-Xlint:-options</arg>
+          </compilerArgs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>compile-java9</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <release>9</release>
+              <multiReleaseOutput>true</multiReleaseOutput>
+              <useIncrementalCompilation>false</useIncrementalCompilation>
+              <compileSourceRoots>
+                <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+              </compileSourceRoots>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- jar 清单：显式声明 Multi-Release 与自动模块名 -->
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Multi-Release>true</Multi-Release>
+              <Automatic-Module-Name>org.zero.sort</Automatic-Module-Name>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <!-- 集成测试（failsafe）：*IT 在打包后运行，用于验证 MR-JAR 结构；sort.jar 属性指向打包产物 -->
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <sort.jar>${project.build.directory}/${project.build.finalName}.jar</sort.jar>
+          </systemPropertyVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 附加 javadoc jar（工具库发布最佳实践）；实现类均为包私有，javadoc 只收录 Sort/Algorithm 公共 API -->
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 附加 sources jar（已知限制：不含 src/main/java9 的 MR-JAR 版本化源码，基础层源码行为一致） -->
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- 代码卫生检查：与 JDK 版本无关的步骤（GJF 依赖 javac 内部 API，跨 JDK 行为不一致，不使用） -->
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
         <version>3.9.0</version>
         <configuration>
+          <includes>
+            <include>src/main/java/**</include>
+            <include>src/main/java9/**</include>
+            <include>src/test/java/**</include>
+          </includes>
           <java>
             <!-- 静态导入在前，其余导入归入隐式末组，组间空行分隔（与 AOSP 风格一致） -->
             <importOrder>
@@ -103,7 +204,9 @@
           </execution>
         </executions>
       </plugin>
-      <!-- 覆盖率：prepare-agent 注入探针，report 生成报告，check 执行门槛校验 -->
+
+      <!-- 覆盖率：prepare-agent 注入探针，report 生成报告，check 执行门槛校验；
+           排除 META-INF/versions（版本化类与基础类同 FQCN，会造成分析歧义且覆盖率计分无意义） -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -120,6 +223,11 @@
             <goals>
               <goal>report</goal>
             </goals>
+            <configuration>
+              <excludes>
+                <exclude>**/META-INF/versions/**</exclude>
+              </excludes>
+            </configuration>
           </execution>
           <execution>
             <id>check</id>
@@ -128,6 +236,9 @@
               <goal>check</goal>
             </goals>
             <configuration>
+              <excludes>
+                <exclude>**/META-INF/versions/**</exclude>
+              </excludes>
               <rules>
                 <rule>
                   <element>BUNDLE</element>
@@ -151,4 +262,54 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <!-- JDK 8 专用：javac 8 没有 release 选项，改为 source/target 1.8；
+         同时禁用 compile-java9（JDK 8 产物非 MR jar）与 spotless（3.x 需要 JDK 17+） -->
+    <profile>
+      <id>jdk8</id>
+      <activation>
+        <jdk>[1.8,9)</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>default-compile</id>
+                <configuration combine.self="override">
+                  <source>1.8</source>
+                  <target>1.8</target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>default-testCompile</id>
+                <configuration combine.self="override">
+                  <source>1.8</source>
+                  <target>1.8</target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>compile-java9</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>3.9.0</version>
+            <executions>
+              <execution>
+                <id>default</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
