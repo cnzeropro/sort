@@ -5,17 +5,16 @@ import java.util.function.Consumer;
 
 /**
  * 排序算法耗时演示
- * <p>
- * 运行方式：在 IDE 中直接运行 main 方法，或执行
- * <p>
- * mvn -q exec:java -Dexec.mainClass=org.zero.sort.SortDemo -Dexec.classpathScope=test
+ *
+ * <p>运行方式：在 IDE 中直接运行 main 方法，或执行
+ *
+ * <p>mvn -q exec:java -Dexec.mainClass=org.zero.sort.SortDemo -Dexec.classpathScope=test
  *
  * @author Zero
  */
 public class SortDemo {
 
-    private SortDemo() {
-    }
+    private SortDemo() {}
 
     /** 生成随机数组 */
     private static Integer[] randomArray(int size) {

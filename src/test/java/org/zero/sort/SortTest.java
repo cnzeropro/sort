@@ -1,5 +1,8 @@
 package org.zero.sort;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Consumer;
@@ -8,14 +11,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 /**
  * 排序算法单元测试
- * <p>
- * 每个算法均需通过以下用例：随机数组、已有序数组、逆序数组、含重复元素数组、
- * 单元素数组、双元素数组、区间排序，以及非法入参校验。
+ *
+ * <p>每个算法均需通过以下用例：随机数组、已有序数组、逆序数组、含重复元素数组、 单元素数组、双元素数组、区间排序，以及非法入参校验。
  *
  * @author Zero
  */
@@ -137,14 +136,18 @@ public class SortTest {
         Double[] a = new Double[] {9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
         // 仅对 [2, 5] 区间排序，区间外元素应保持原样
         sort.sort(a, 2, 5);
-        assertArrayEquals(new Double[] {9.0, 8.0, 4.0, 5.0, 6.0, 7.0, 3.0, 2.0, 1.0}, a,
+        assertArrayEquals(
+                new Double[] {9.0, 8.0, 4.0, 5.0, 6.0, 7.0, 3.0, 2.0, 1.0},
+                a,
                 name + " failed on subrange sort");
     }
 
     @ParameterizedTest(name = "{0} - null 数组校验")
     @MethodSource("algorithms")
     void rejectsNullArray(String name, Consumer<Double[]> sort) {
-        assertThrows(IllegalArgumentException.class, () -> sort.accept(null),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.accept(null),
                 name + " should reject null array");
     }
 
@@ -152,7 +155,9 @@ public class SortTest {
     @MethodSource("algorithms")
     void rejectsNullElement(String name, Consumer<Double[]> sort) {
         Double[] a = new Double[] {1.0, null, 3.0};
-        assertThrows(IllegalArgumentException.class, () -> sort.accept(a),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.accept(a),
                 name + " should reject array containing null");
     }
 
@@ -160,7 +165,9 @@ public class SortTest {
     @MethodSource("algorithms")
     void rejectsEmptyArray(String name, Consumer<Double[]> sort) {
         Double[] a = new Double[0];
-        assertThrows(IllegalArgumentException.class, () -> sort.accept(a),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.accept(a),
                 name + " should reject empty array");
     }
 
@@ -168,7 +175,9 @@ public class SortTest {
     @MethodSource("rangeAlgorithms")
     void rejectsNegativeStartIndex(String name, RangeSort sort) {
         Double[] a = new Double[] {1.0, 2.0, 3.0};
-        assertThrows(IllegalArgumentException.class, () -> sort.sort(a, -1, 2),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.sort(a, -1, 2),
                 name + " should reject negative startIndex");
     }
 
@@ -176,7 +185,9 @@ public class SortTest {
     @MethodSource("rangeAlgorithms")
     void rejectsOutOfBoundsEndIndex(String name, RangeSort sort) {
         Double[] a = new Double[] {1.0, 2.0, 3.0};
-        assertThrows(IllegalArgumentException.class, () -> sort.sort(a, 0, 3),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.sort(a, 0, 3),
                 name + " should reject out-of-bounds endIndex");
     }
 
@@ -184,7 +195,9 @@ public class SortTest {
     @MethodSource("rangeAlgorithms")
     void rejectsStartGreaterThanEnd(String name, RangeSort sort) {
         Double[] a = new Double[] {1.0, 2.0, 3.0};
-        assertThrows(IllegalArgumentException.class, () -> sort.sort(a, 2, 1),
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> sort.sort(a, 2, 1),
                 name + " should reject startIndex > endIndex");
     }
 }
