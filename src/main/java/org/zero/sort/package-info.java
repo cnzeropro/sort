@@ -25,8 +25,8 @@
  * （JEP 238），各版本行为完全一致。
  *
  * <h2>原始类型实现</h2>
- * 包内的原始类型特化实现（{@code IntSorts}、{@code DoubleSorts} 等，包私有）由
- * {@code tools/gen-primitives.py} 生成，修改算法请编辑脚本后重新生成。
+ * 包内的原始类型特化实现（{@code IntSorts}、{@code DoubleSorts} 等，包私有）为
+ * 手工维护代码，与对象数组版算法（{@code GenericSorts}）行为一致。
  *
  * @author Zero
  * @see org.zero.sort.Sort

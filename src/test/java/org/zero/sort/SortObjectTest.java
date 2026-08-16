@@ -8,16 +8,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * 对象数组（Comparable）排序测试
  * <p>
- * 全部 6 种算法 × 完整输入矩阵（随机/有序/逆序/重复/单双元素/空数组/等值数组/区间），
- * 另含稳定性专项、命名方法与枚举分派等价性、比较次数防退化、泛型边界（父类实现
- * Comparable）与非法入参校验。期望结果以 {@link Arrays#sort(Object[])}（TimSort 稳定）为 oracle。
+ * 全部适用算法（21 种中的 17 种比较类算法）× 完整输入矩阵（随机/有序/逆序/重复/
+ * 单双元素/空数组/等值数组/区间），另含稳定性专项、命名方法与枚举分派等价性、
+ * 比较次数防退化、泛型边界（父类实现 Comparable）与非法入参校验。
+ * 期望结果以 {@link Arrays#sort(Object[])}（TimSort 稳定）为 oracle。
  *
  * @author Zero
  */
@@ -28,6 +31,36 @@ public class SortObjectTest {
 
     /** 防退化比较次数上限系数：count < C * n * log2(n) */
     private static final long COUNT_LIMIT_FACTOR = 50L;
+
+    /** 适用算法（对象数组只支持 ALL 类算法）+ 建议规模 */
+    static Stream<Arguments> algorithms() {
+        Stream.Builder<Arguments> b = Stream.builder();
+        for (Algorithm algorithm : Algorithm.values()) {
+            if (algorithm.applicability() == Algorithm.Applicability.ALL) {
+                b.add(Arguments.of(algorithm, sizeFor(algorithm)));
+            }
+        }
+        return b.build();
+    }
+
+    /** 按算法复杂度映射测试规模 */
+    private static int sizeFor(Algorithm algorithm) {
+        switch (algorithm) {
+            case STOOGE:
+                return 60;
+            case PANCAKE:
+            case BUBBLE:
+            case SELECTION:
+            case INSERTION:
+            case GNOME:
+            case COCKTAIL:
+            case ODD_EVEN:
+            case CYCLE:
+                return 200;
+            default:
+                return 1000;
+        }
+    }
 
     /** 生成固定种子的随机 Integer 数组 */
     private static Integer[] randomInts(int size, int bound) {
@@ -54,18 +87,18 @@ public class SortObjectTest {
     // ==================== 排序正确性矩阵 ====================
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsRandomArray(Algorithm algorithm) {
-        Integer[] a = randomInts(1000, 10000);
+    @MethodSource("algorithms")
+    void sortsRandomArray(Algorithm algorithm, int size) {
+        Integer[] a = randomInts(size, 10000);
         Integer[] expected = sortedCopy(a);
         Sort.sort(a, algorithm);
         assertArrayEquals(expected, a, algorithm + " failed on random array");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsAlreadySortedArray(Algorithm algorithm) {
-        Integer[] a = randomInts(100, 1000);
+    @MethodSource("algorithms")
+    void sortsAlreadySortedArray(Algorithm algorithm, int size) {
+        Integer[] a = randomInts(size, 1000);
         Arrays.sort(a);
         Integer[] expected = a.clone();
         Sort.sort(a, algorithm);
@@ -73,9 +106,9 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsReverseSortedArray(Algorithm algorithm) {
-        Integer[] a = new Integer[100];
+    @MethodSource("algorithms")
+    void sortsReverseSortedArray(Algorithm algorithm, int size) {
+        Integer[] a = new Integer[size];
         for (int i = 0; i < a.length; i++) {
             a[i] = a.length - i;
         }
@@ -85,25 +118,25 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsArrayWithDuplicates(Algorithm algorithm) {
-        Integer[] a = randomInts(100, 5);
+    @MethodSource("algorithms")
+    void sortsArrayWithDuplicates(Algorithm algorithm, int size) {
+        Integer[] a = randomInts(size, 5);
         Integer[] expected = sortedCopy(a);
         Sort.sort(a, algorithm);
         assertArrayEquals(expected, a, algorithm + " failed on array with duplicates");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsSingleElementArray(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void sortsSingleElementArray(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {7};
         Sort.sort(a, algorithm);
         assertArrayEquals(new Integer[] {7}, a, algorithm + " failed on single element array");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsTwoElementArray(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void sortsTwoElementArray(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {9, 2};
         Sort.sort(a, algorithm);
         assertArrayEquals(new Integer[] {2, 9}, a, algorithm + " failed on two element array");
@@ -114,17 +147,16 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsEmptyArray(Algorithm algorithm) {
-        // 空数组合法，排序为空操作（与 Arrays.sort 一致）
+    @MethodSource("algorithms")
+    void sortsEmptyArray(Algorithm algorithm, int size) {
         Integer[] a = new Integer[0];
         Sort.sort(a, algorithm);
         assertArrayEquals(new Integer[0], a, algorithm + " failed on empty array");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsAllEqualArray(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void sortsAllEqualArray(Algorithm algorithm, int size) {
         Integer[] a = new Integer[20];
         Arrays.fill(a, 5);
         Integer[] expected = a.clone();
@@ -133,20 +165,18 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsSubrangeOnly(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void sortsSubrangeOnly(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {9, 8, 7, 6, 5, 4, 3, 2, 1};
         Integer[] expected = a.clone();
         Arrays.sort(expected, 2, 6);
-        // 仅对 [2, 6) 排序，区间外元素保持原样
         Sort.sort(a, algorithm, 2, 6);
         assertArrayEquals(expected, a, algorithm + " failed on subrange sort");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsEmptyRange(Algorithm algorithm) {
-        // 空区间（from == to）合法，数组保持原样
+    @MethodSource("algorithms")
+    void sortsEmptyRange(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {9, 8, 7, 6, 5, 4, 3, 2, 1};
         Integer[] expected = a.clone();
         Sort.sort(a, algorithm, 3, 3);
@@ -154,9 +184,8 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsFullRange(Algorithm algorithm) {
-        // [0, length) 等价于全数组排序
+    @MethodSource("algorithms")
+    void sortsFullRange(Algorithm algorithm, int size) {
         Integer[] a = randomInts(100, 1000);
         Integer[] expected = sortedCopy(a);
         Sort.sort(a, algorithm, 0, a.length);
@@ -164,9 +193,8 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsLastSingleElementRange(Algorithm algorithm) {
-        // 末元素单元素区间 [length - 1, length) 合法
+    @MethodSource("algorithms")
+    void sortsLastSingleElementRange(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {5, 3, 8, 1, 9};
         Integer[] expected = a.clone();
         Sort.sort(a, algorithm, 4, 5);
@@ -174,8 +202,8 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void sortsStrings(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void sortsStrings(Algorithm algorithm, int size) {
         String[] a = new String[] {"banana", "apple", "cherry", "avocado"};
         String[] expected = a.clone();
         Arrays.sort(expected);
@@ -196,8 +224,8 @@ public class SortObjectTest {
     // ==================== 稳定性专项 ====================
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void stabilityContract(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void stabilityContract(Algorithm algorithm, int size) {
         int[] keys = {3, 1, 2, 1, 3, 2, 1, 3};
         Keyed[] a = new Keyed[keys.length];
         for (int i = 0; i < keys.length; i++) {
@@ -224,8 +252,8 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void stableAlgorithmsKeepAllEqualArrayUntouched(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void stableAlgorithmsKeepAllEqualArrayUntouched(Algorithm algorithm, int size) {
         if (!algorithm.isStable()) {
             return;
         }
@@ -239,11 +267,42 @@ public class SortObjectTest {
         assertArrayEquals(before, a, algorithm + " 全相等输入时不应移动任何元素");
     }
 
+    // ==================== 默认算法（Tim）等价性 ====================
+
+    @Test
+    void defaultSortMatchesTimSort() {
+        Integer[] shapes1 = randomInts(1000, 10000);
+        Integer[] shapes2 = randomInts(100, 5);
+        Integer[] shapes3 = new Integer[200];
+        Arrays.fill(shapes3, 7);
+        Integer[] shapes4 = new Integer[500];
+        for (int i = 0; i < shapes4.length; i++) {
+            shapes4[i] = shapes4.length - i;
+        }
+        Integer[][] shapes = {shapes1, shapes2, shapes3, shapes4};
+        for (Integer[] shape : shapes) {
+            Integer[] a = shape.clone();
+            Integer[] b = shape.clone();
+            Sort.sort(a);
+            Sort.sort(b, Algorithm.TIM);
+            assertArrayEquals(b, a, "默认 sort(a) 应与 sort(a, Algorithm.TIM) 一致");
+        }
+    }
+
     // ==================== 命名方法与枚举分派等价性 ====================
 
     @Test
     void namedMethodsMatchEnumDispatch() {
-        for (Algorithm algorithm : Algorithm.values()) {
+        // 仅覆盖有命名便捷方法的 6 个算法（其余算法通过枚举分派使用）
+        Algorithm[] named = {
+            Algorithm.BUBBLE,
+            Algorithm.SELECTION,
+            Algorithm.INSERTION,
+            Algorithm.SHELL,
+            Algorithm.MERGE,
+            Algorithm.QUICK
+        };
+        for (Algorithm algorithm : named) {
             Integer[] a = randomInts(200, 1000);
             Integer[] b = a.clone();
             sortNamed(a, algorithm);
@@ -274,7 +333,7 @@ public class SortObjectTest {
                 Sort.quickSort(a);
                 break;
             default:
-                throw new IllegalStateException("Unknown algorithm: " + algorithm);
+                throw new IllegalStateException("No named method for " + algorithm);
         }
     }
 
@@ -284,7 +343,7 @@ public class SortObjectTest {
     void subQuadraticAlgorithmsDoNotDegrade() {
         int n = 10_000;
         long limit = COUNT_LIMIT_FACTOR * n * log2Ceil(n);
-        Algorithm[] algorithms = {Algorithm.SHELL, Algorithm.MERGE, Algorithm.QUICK};
+        Algorithm[] algorithms = {Algorithm.SHELL, Algorithm.MERGE, Algorithm.QUICK, Algorithm.HEAP, Algorithm.TIM};
         for (Algorithm algorithm : algorithms) {
             for (int shape = 0; shape < 4; shape++) {
                 Counting[] a = buildShape(n, shape);
@@ -330,6 +389,36 @@ public class SortObjectTest {
         return a;
     }
 
+    // ==================== Tim 排序 run 栈专项 ====================
+
+    @Test
+    void timSortHandlesAlternatingRuns() {
+        // 交替升降 run 输入，覆盖 mergeCollapse 的栈不变量各分支
+        for (int size : new int[] {200, 1000, 5000}) {
+            Integer[] a = alternatingRuns(size, 40);
+            Integer[] expected = sortedCopy(a);
+            Sort.sort(a, Algorithm.TIM);
+            assertArrayEquals(expected, a, "TimSort failed on alternating runs, size=" + size);
+        }
+    }
+
+    /** 构造交替升降 run 的数组（run 长度约 runLen） */
+    private static Integer[] alternatingRuns(int size, int runLen) {
+        Integer[] a = new Integer[size];
+        int value = 0;
+        int i = 0;
+        boolean ascending = true;
+        while (i < size) {
+            int len = Math.min(runLen, size - i);
+            for (int j = 0; j < len; j++) {
+                a[i++] = ascending ? value + j : value + len - 1 - j;
+            }
+            value += len;
+            ascending = !ascending;
+        }
+        return a;
+    }
+
     // ==================== 阈值边界 ====================
 
     @Test
@@ -351,51 +440,50 @@ public class SortObjectTest {
     // ==================== 非法入参校验 ====================
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsNullArray(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsNullArray(Algorithm algorithm, int size) {
         assertThrows(NullPointerException.class, () -> Sort.sort((Integer[]) null, algorithm));
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsNullElementInRange(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsNullElementInRange(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, null, 3};
         assertThrows(NullPointerException.class, () -> Sort.sort(a, algorithm));
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void ignoresNullElementOutsideRange(Algorithm algorithm) {
-        // 只扫描排序区间：区间外的 null 不影响（与 Arrays.sort 一致）
+    @MethodSource("algorithms")
+    void ignoresNullElementOutsideRange(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {3, 1, null, 2};
         Sort.sort(a, algorithm, 0, 2);
         assertArrayEquals(new Integer[] {1, 3, null, 2}, a, algorithm + " failed on range with null outside");
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsNegativeFromIndex(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsNegativeFromIndex(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, 2, 3};
         assertThrows(IndexOutOfBoundsException.class, () -> Sort.sort(a, algorithm, -1, 3));
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsToIndexTooLarge(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsToIndexTooLarge(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, 2, 3};
         assertThrows(IndexOutOfBoundsException.class, () -> Sort.sort(a, algorithm, 0, 4));
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsFromGreaterThanTo(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsFromGreaterThanTo(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, 2, 3};
         assertThrows(IndexOutOfBoundsException.class, () -> Sort.sort(a, algorithm, 3, 2));
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsHugeIndexes(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsHugeIndexes(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, 2, 3};
         assertThrows(
                 IndexOutOfBoundsException.class,
@@ -403,8 +491,8 @@ public class SortObjectTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @EnumSource(Algorithm.class)
-    void rejectsNullAlgorithm(Algorithm algorithm) {
+    @MethodSource("algorithms")
+    void rejectsNullAlgorithm(Algorithm algorithm, int size) {
         Integer[] a = new Integer[] {1, 2, 3};
         assertThrows(NullPointerException.class, () -> Sort.sort(a, (Algorithm) null));
     }
