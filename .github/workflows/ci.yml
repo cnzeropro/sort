@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [dev]
+    branches: [main]
   pull_request:
-    branches: [dev]
+    branches: [main]
 
 # 同一分支/PR 的新运行会取消旧运行，避免重复构建
 concurrency:
