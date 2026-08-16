@@ -6,7 +6,7 @@
 
   <groupId>org.zero</groupId>
   <artifactId>sort</artifactId>
-  <version>1.2.0-SNAPSHOT</version>
+  <version>1.2.0</version>
 
   <name>sort</name>
   <description>经典排序算法的 Java 工具库：Comparable 对象与全部数字原始类型，Java 8 基线 + Multi-Release JAR</description>
