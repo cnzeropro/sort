@@ -37,3 +37,8 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: ./mvnw -B --no-transfer-progress clean verify
+      - name: JMH benchmark smoke
+        if: matrix.java != '8'
+        run: |
+          ./mvnw -B --no-transfer-progress -Pbenchmarks compile dependency:build-classpath -Dmdep.outputFile=target/benchmark-cp.txt
+          java -cp "target/benchmark-classes:target/classes:$(cat target/benchmark-cp.txt)" org.openjdk.jmh.Main SmokeBenchmark -f 1 -wi 1 -i 2 -w 1s -r 1s

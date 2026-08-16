@@ -155,6 +155,83 @@ Sort.sort(d, Algorithm.BUCKET);        // NaN 排最后、-0.0 < 0.0
 - **Spotless**：导入顺序/未用导入/行尾（JDK 17+ 运行，JDK 8 job 自动跳过）
 - **CI**：JDK 8/17/21 三矩阵；JDK 8 job 以 javac 8 + JDK 8 bootclasspath 编译，验证无 9+ API 泄漏
 
+## 性能基准（JMH）
+
+基准源码位于 `src/jmh/java`（21 种算法 × 5 种输入形态 + JDK `Arrays.sort` 基线对照），运行方式：
+
+```bash
+# 编译基准并导出依赖类路径
+./mvnw -Pbenchmarks compile dependency:build-classpath -Dmdep.outputFile=target/benchmark-cp.txt
+
+# 运行全部基准（Linux/macOS 用 : 分隔类路径）
+java -cp "target/benchmark-classes;target/classes;$(cat target/benchmark-cp.txt)" \
+     org.openjdk.jmh.Main -f 1 -wi 2 -i 3 -w 1s -r 1s
+
+# 运行单个基准（如快速排序）
+java -cp "target/benchmark-classes;target/classes;$(cat target/benchmark-cp.txt)" \
+     org.openjdk.jmh.Main SortIntBenchmark.quick
+```
+
+输入形态：`RANDOM`（均匀随机）/ `SORTED`（升序）/ `REVERSE`（降序）/ `DUPLICATES`（值域 16）/ `NEAR_SORTED`（近有序）。规模按算法复杂度分档（O(n log n) 类 n=10⁴、O(n²) 类 n=10³、STOOGE n=200）。
+
+<!-- 基准结果表 -->
+### int[]（µs/op，越小越好）
+
+| 算法 | RANDOM | SORTED | REVERSE | DUPLICATES | NEAR_SORTED |
+|------|---:|---:|---:|---:|---:
+| shell | 695.6 | 17.1 | 92.0 | 346.3 | 61.3 |
+| merge | 508.8 | 10.5 | 80.7 | 294.0 | 15.4 |
+| quick | 500.2 | 68.0 | 77.8 | 210.7 | 74.7 |
+| heap | 614.5 | 404.1 | 431.8 | 541.2 | 456.1 |
+| tim | 694.1 | 5.3 | 14.1 | 456.3 | 23.3 |
+| comb | 646.0 | 62.6 | 101.1 | 224.2 | 93.2 |
+| bitonic | 2819.3 | 1854.6 | 1737.6 | 1927.0 | 1601.1 |
+| tree | 683.2 | 63608.0 | 65128.8 | 6326.0 | 67350.0 |
+| counting | 130.4 | 46.0 | 43.8 | 31.0 | 16.5 |
+| radix | 61.0 | 111.8 | 109.8 | 128.3 | 117.5 |
+| pigeonhole | 137.4 | 19.3 | 18.0 | 12.0 | 16.9 |
+| **default**（默认策略） | 449.0 | 11.1 | 73.4 | 222.7 | 23.8 |
+| **Arrays.sort**（JDK 基线） | 392.6 | 2.5 | 5.5 | 130.5 | 27.8 |
+| bubble | 685.5 | 0.2 | 183.3 | 530.6 | 0.4 |
+| selection | 194.6 | 89.4 | 855.9 | 170.6 | 214.8 |
+| insertion | 43.6 | 0.2 | 132.5 | 41.8 | 0.8 |
+| gnome | 605.0 | 0.2 | 1036.9 | 469.2 | 0.6 |
+| cocktail | 661.7 | 0.2 | 255.2 | 602.0 | 0.4 |
+| oddEven | 566.4 | 0.8 | 401.4 | 624.7 | 1.5 |
+| cycle | 1011.4 | 78.7 | 223.1 | 1110.6 | 141.0 |
+| pancake | 439.9 | 94.0 | 166.0 | 379.4 | 304.5 |
+| stooge | 1481.6 | 1137.6 | 1242.3 | 1235.3 | 1271.0 |
+
+> n=10⁴；bubble/selection/insertion/gnome/cocktail/oddEven/cycle/pancake 为 n=10³；stooge 为 n=200；counting/pigeonhole 使用值域 0..65535 的有界数据。
+
+### Integer[]（µs/op，越小越好）
+
+| 算法 | RANDOM | SORTED | REVERSE | DUPLICATES | NEAR_SORTED |
+|------|---:|---:|---:|---:|---:
+| shell | 1589.3 | 156.4 | 382.3 | 783.0 | 175.2 |
+| merge | 979.7 | 28.2 | 324.8 | 648.4 | 37.0 |
+| quick | 863.5 | 139.4 | 148.9 | 542.9 | 136.3 |
+| heap | 1462.6 | 1111.3 | 1157.4 | 1188.2 | 1104.3 |
+| tim | 1145.9 | 12.2 | 32.7 | 722.4 | 73.6 |
+| comb | 1974.8 | 170.8 | 411.4 | 958.8 | 329.0 |
+| bitonic | 3069.7 | 1950.3 | 1944.4 | 2495.0 | 2843.8 |
+| tree | 2578.4 | 1488.3 | 924.2 | 247.8 | 1008.6 |
+| **default**（默认策略） | 1148.4 | 11.6 | 33.4 | 723.3 | 74.5 |
+| **Arrays.sort**（JDK 基线） | 1026.3 | 9.7 | 26.3 | 645.1 | 18.4 |
+| bubble | 1359.1 | 0.5 | 1491.4 | 1518.4 | 2.1 |
+| selection | 704.3 | 212.1 | 640.5 | 560.0 | 672.4 |
+| insertion | 370.9 | 2.0 | 914.8 | 425.0 | 3.1 |
+| gnome | 1416.4 | 0.6 | 2731.0 | 1328.5 | 1.5 |
+| cocktail | 1201.1 | 0.5 | 2030.2 | 1330.1 | 1.5 |
+| oddEven | 1460.0 | 0.9 | 1949.0 | 1833.6 | 3.1 |
+| cycle | 1963.2 | 213.6 | 655.5 | 861.8 | 285.4 |
+| pancake | 1906.8 | 385.0 | 273.7 | 1693.9 | 587.1 |
+| stooge | 1638.7 | 1464.5 | 1681.6 | 1900.6 | 1656.9 |
+
+> n=10⁴；bubble/selection/insertion/gnome/cocktail/oddEven/cycle/pancake 为 n=10³；stooge 为 n=200；counting/pigeonhole 使用值域 0..65535 的有界数据。
+
+> 数据为一次性运行（fork=1, warmup=1×1s, measurement=2×1s）的结果，仅供参考；精确对比请在本机按上述命令复测。测试环境：JDK 26.0.2（OpenJDK）、Windows 11、x64。
+
 ## 从 v1.0 升级（行为变更）
 
 - **默认算法**：对象 `sort(a)` 由 QUICK 改为 **TIM**（稳定、自适应）；原始类型改为**自适应调度**

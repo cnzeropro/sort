@@ -78,6 +78,10 @@
           <artifactId>maven-source-plugin</artifactId>
           <version>3.4.0</version>
         </plugin>
+        <plugin>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.11.0</version>
+        </plugin>
         <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
         <plugin>
           <artifactId>maven-site-plugin</artifactId>
@@ -264,6 +268,61 @@
   </build>
 
   <profiles>
+    <!-- 基准测试（JMH）：默认不激活。
+         运行方式：mvn -Pbenchmarks compile exec:java -Dexec.args="..."
+         （jmh-maven-plugin 已从 Maven Central 下架，采用 exec 直跑 JMH Main 的方式，
+         benchmark-classes 经 additionalClasspathElements 加入类路径） -->
+    <profile>
+      <id>benchmarks</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.openjdk.jmh</groupId>
+          <artifactId>jmh-core</artifactId>
+          <version>1.37</version>
+        </dependency>
+        <dependency>
+          <groupId>org.openjdk.jmh</groupId>
+          <artifactId>jmh-generator-annprocess</artifactId>
+          <version>1.37</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <!-- 编译 src/jmh 基准源码到 target/benchmark-classes（source/target 1.8 兼容所有 JDK） -->
+          <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>compile-jmh</id>
+                <phase>compile</phase>
+                <goals>
+                  <goal>compile</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <source>1.8</source>
+                  <target>1.8</target>
+                  <compilerArgs>
+                    <!-- JDK 23+ javac 默认关闭隐式注解处理，JMH 注解处理器需显式开启 -->
+                    <arg>-proc:full</arg>
+                    <arg>-Xlint:-options</arg>
+                  </compilerArgs>
+                  <compileSourceRoots>
+                    <compileSourceRoot>${project.basedir}/src/jmh/java</compileSourceRoot>
+                  </compileSourceRoots>
+                  <outputDirectory>${project.build.directory}/benchmark-classes</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- 运行方式（JMH 的 fork 需要完整 java.class.path，exec:java 进程内运行
+               会导致 fork 出的基准 JVM 找不到 ForkedMain，故用 dependency 插件
+               导出类路径后以原生 java 启动）：
+               mvn -Pbenchmarks compile dependency:build-classpath -Dmdep.outputFile=target/benchmark-cp.txt
+               java -cp "target/benchmark-classes;target/classes;$(cat target/benchmark-cp.txt)" org.openjdk.jmh.Main <基准正则> [jmh参数] -->
+        </plugins>
+      </build>
+    </profile>
+
     <!-- JDK 8 专用：javac 8 没有 release 选项，改为 source/target 1.8；
          同时禁用 compile-java9（JDK 8 产物非 MR jar）与 spotless（3.x 需要 JDK 17+） -->
     <profile>
