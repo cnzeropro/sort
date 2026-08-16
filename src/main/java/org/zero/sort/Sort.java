@@ -2,52 +2,50 @@ package org.zero.sort;
 
 /**
  * 排序算法类
- * <p>
- * C：比较次数
- * <p>
- * M：移动次数
+ *
+ * <p>C：比较次数
+ *
+ * <p>M：移动次数
  *
  * @author Zero
  */
 public class Sort {
 
-    private Sort() {
-    }
+    private Sort() {}
 
     /**
      * 冒泡排序算法类
-     * <p>
-     * <b><i>稳定</i></b> 排序算法
-     * <p>
-     * Cmin = n-1;
-     * <p>
-     * Mmin = 0;
-     * <p>
-     * Cmin + Mmin = n-1;
-     * <p>
-     * 根据大O推导法则，最好时间复杂度为O(n)
-     * <p>
-     * Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     * <p>
-     * Mmax = 3(n-1)+(n-2)+...+2+1 =3n(n-1)/2;
-     * <p>
-     * Cmax + Mmax = 2n(n-1);
-     * <p>
-     * 根据大O推导法则，最坏时间复杂度为O(n^2)
-     * <p>
-     * 平均时间复杂度为<b>O(n^2)</b>
+     *
+     * <p><b><i>稳定</i></b> 排序算法
+     *
+     * <p>Cmin = n-1;
+     *
+     * <p>Mmin = 0;
+     *
+     * <p>Cmin + Mmin = n-1;
+     *
+     * <p>根据大O推导法则，最好时间复杂度为O(n)
+     *
+     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
+     *
+     * <p>Mmax = 3(n-1)+(n-2)+...+2+1 =3n(n-1)/2;
+     *
+     * <p>Cmax + Mmax = 2n(n-1);
+     *
+     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
+     *
+     * <p>平均时间复杂度为<b>O(n^2)</b>
      *
      * @author Zero
      */
     public static class Bubble {
-        private Bubble() {
-        }
+        private Bubble() {}
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
@@ -65,8 +63,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -76,8 +74,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -86,7 +84,7 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
@@ -95,36 +93,35 @@ public class Sort {
 
     /**
      * 选择排序算法类
-     * <p>
-     * <b><i>不稳定</i></b> 排序算法
-     * <p>
-     * Cmin = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     * <p>
-     * Mmin = 0;
-     * <p>
-     * Cmin + Mmin = n(n-1)/2;
-     * <p>
-     * 根据大O推导法则，最好时间复杂度为O(n^2)
-     * <p>
-     * Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     * <p>
-     * Mmax = n-1; Cmax + Mmax = (n^2+n-2)/2;
-     * <p>
-     * 根据大O推导法则，最坏时间复杂度为O(n^2)
-     * <p>
-     * 平均时间复杂度为<b>O(n^2)</b>
+     *
+     * <p><b><i>不稳定</i></b> 排序算法
+     *
+     * <p>Cmin = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
+     *
+     * <p>Mmin = 0;
+     *
+     * <p>Cmin + Mmin = n(n-1)/2;
+     *
+     * <p>根据大O推导法则，最好时间复杂度为O(n^2)
+     *
+     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
+     *
+     * <p>Mmax = n-1; Cmax + Mmax = (n^2+n-2)/2;
+     *
+     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
+     *
+     * <p>平均时间复杂度为<b>O(n^2)</b>
      *
      * @author Zero
      */
     public static class Selection {
-        private Selection() {
-        }
+        private Selection() {}
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
@@ -147,8 +144,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -158,8 +155,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -168,7 +165,7 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
@@ -177,39 +174,37 @@ public class Sort {
 
     /**
      * 插入排序算法类
-     * <p>
-     * <b><i>稳定</b></i> 排序算法
-     * <p>
-     * Cmin = n-1;
-     * <p>
-     * Mmin = 0;
-     * <p>
-     * Cmin + Mmin = n-1;
-     * <p>
-     * 根据大O推导法则，最好时间复杂度为O(n)
-     * <p>
-     * Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
-     * <p>
-     * Mmax = 3(n-1)+(n-2)+...+2+1 = 3n(n-1)/2;
-     * <p>
-     * Cmax + Mmax = 2n(n-1);
-     * <p>
-     * 根据大O推导法则，最坏时间复杂度为O(n^2)
-     * <p>
-     * 平均时间复杂度为<b>O(n^2)</b>
+     *
+     * <p><b><i>稳定</b></i> 排序算法
+     *
+     * <p>Cmin = n-1;
+     *
+     * <p>Mmin = 0;
+     *
+     * <p>Cmin + Mmin = n-1;
+     *
+     * <p>根据大O推导法则，最好时间复杂度为O(n)
+     *
+     * <p>Cmax = (n-1)+(n-2)+...+2+1 = n(n-1)/2;
+     *
+     * <p>Mmax = 3(n-1)+(n-2)+...+2+1 = 3n(n-1)/2;
+     *
+     * <p>Cmax + Mmax = 2n(n-1);
+     *
+     * <p>根据大O推导法则，最坏时间复杂度为O(n^2)
+     *
+     * <p>平均时间复杂度为<b>O(n^2)</b>
      *
      * @author Zero
      */
     public static class Insertion {
-        private Insertion() {
-
-        }
+        private Insertion() {}
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
@@ -223,8 +218,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -234,8 +229,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -244,7 +239,7 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
@@ -253,16 +248,16 @@ public class Sort {
 
     /**
      * 希尔排序算法类
-     * <p>
-     * 希尔排序是插入排序改良版，又称增量排序
-     * <p>
-     * <b><i>不稳定</b></i> 排序算法
-     * <p>
-     * 希尔排序的分析是一个复杂的问题，它的时间是所取“增量”序列决定的，目前好像还没有严谨的数学分析
-     * <p>
-     * 时间复杂度的范围是：O(n^1.3)~O(n^2)
-     * <p>
-     * 平均时间复杂度大致是：<b>O(n^1.5)</b>
+     *
+     * <p>希尔排序是插入排序改良版，又称增量排序
+     *
+     * <p><b><i>不稳定</b></i> 排序算法
+     *
+     * <p>希尔排序的分析是一个复杂的问题，它的时间是所取“增量”序列决定的，目前好像还没有严谨的数学分析
+     *
+     * <p>时间复杂度的范围是：O(n^1.3)~O(n^2)
+     *
+     * <p>平均时间复杂度大致是：<b>O(n^1.5)</b>
      *
      * @author Zero
      */
@@ -270,10 +265,10 @@ public class Sort {
         /**
          * 严谨增量序列的希尔排序
          *
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
@@ -287,7 +282,9 @@ public class Sort {
             // increment >= 1
             while (increment > 0) {
                 for (int i = startIndex + increment; i <= endIndex; i++) {
-                    for (int j = i; (j >= startIndex + increment) && compare(a[j - increment], a[j]); j -= increment) {
+                    for (int j = i;
+                            (j >= startIndex + increment) && compare(a[j - increment], a[j]);
+                            j -= increment) {
                         swap(a, j - increment, j);
                     }
                 }
@@ -296,8 +293,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -307,8 +304,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -317,7 +314,7 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
@@ -327,7 +324,7 @@ public class Sort {
          * 普通增量序列的希尔排序（对整个数组排序）
          *
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void generalSort(T[] a) {
             check(a);
@@ -337,21 +334,24 @@ public class Sort {
 
         /**
          * 普通增量序列的希尔排序
-         * <p>
-         * 运行时间更长
          *
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * <p>运行时间更长
+         *
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
-        public static <T extends Comparable<T>> void generalSort(T[] a, int startIndex, int endIndex) {
+        public static <T extends Comparable<T>> void generalSort(
+                T[] a, int startIndex, int endIndex) {
             check(a);
             check(a, startIndex, endIndex);
 
             for (int increment = (endIndex - startIndex + 1) / 2; increment > 0; increment /= 2) {
                 for (int i = startIndex + increment; i <= endIndex; i++) {
-                    for (int j = i; (j >= startIndex + increment) && compare(a[j - increment], a[j]); j -= increment) {
+                    for (int j = i;
+                            (j >= startIndex + increment) && compare(a[j - increment], a[j]);
+                            j -= increment) {
                         swap(a, j - increment, j);
                     }
                 }
@@ -361,39 +361,53 @@ public class Sort {
 
     /**
      * 归并排序算法类
-     * <p>
-     * <b><i>稳定</i></b> 排序算法
-     * <p>
-     * 最好时间复杂度O(n)
-     * <p>
-     * 最坏时间复杂度O(nlogn)
-     * <p>
-     * 平均时间复杂度<b>O(nlogn)</b>
+     *
+     * <p><b><i>稳定</i></b> 排序算法
+     *
+     * <p>最好时间复杂度O(n)
+     *
+     * <p>最坏时间复杂度O(nlogn)
+     *
+     * <p>平均时间复杂度<b>O(nlogn)</b>
      *
      * @author Zero
      */
     public static class Merge {
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
             check(a, startIndex, endIndex);
 
+            sortRec(a, startIndex, endIndex);
+        }
+
+        /**
+         * 归并排序递归实现
+         *
+         * <p>公共入口已完成校验，递归过程不再重复校验，避免每层递归都全数组扫描
+         *
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
+         * @param startIndex 起始索引
+         * @param endIndex 结束索引
+         */
+        private static <T extends Comparable<T>> void sortRec(T[] a, int startIndex, int endIndex) {
             if (endIndex > startIndex) {
                 int midIndex = startIndex + (endIndex - startIndex) / 2;
-                sort(a, startIndex, midIndex);
-                sort(a, midIndex + 1, endIndex);
+                sortRec(a, startIndex, midIndex);
+                sortRec(a, midIndex + 1, endIndex);
                 merge(a, startIndex, midIndex, endIndex);
             }
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -403,8 +417,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -413,17 +427,17 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
         }
 
         /**
-         * @param <T>  实现了Comparable接口的类型
-         * @param a    待排序数组
-         * @param low  起始位置
-         * @param mid  中间位置
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
+         * @param low 起始位置
+         * @param mid 中间位置
          * @param high 结束位置
          */
         private static <T extends Comparable<T>> void merge(T[] a, int low, int mid, int high) {
@@ -455,42 +469,56 @@ public class Sort {
 
     /**
      * 快速排序算法类
-     * <p>
-     * <b><i>不稳定</i></b> 排序算法
-     * <p>
-     * 最好时间复杂度O(nlog2n)
-     * <p>
-     * 最坏时间复杂度O(n^2)
-     * <p>
-     * 平均时间复杂度<b>O(nlog2n)</b>
+     *
+     * <p><b><i>不稳定</i></b> 排序算法
+     *
+     * <p>最好时间复杂度O(nlog2n)
+     *
+     * <p>最坏时间复杂度O(n^2)
+     *
+     * <p>平均时间复杂度<b>O(nlog2n)</b>
      *
      * @author Zero
      */
     public static class Quick {
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
-         * @param endIndex   结束索引
+         * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sort(T[] a, int startIndex, int endIndex) {
             check(a);
             check(a, startIndex, endIndex);
 
+            sortRec(a, startIndex, endIndex);
+        }
+
+        /**
+         * 快速排序递归实现
+         *
+         * <p>公共入口已完成校验，递归过程不再重复校验，避免每层递归都全数组扫描
+         *
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
+         * @param startIndex 起始索引
+         * @param endIndex 结束索引
+         */
+        private static <T extends Comparable<T>> void sortRec(T[] a, int startIndex, int endIndex) {
             if (startIndex < endIndex) {
                 int pivot = partition(a, startIndex, endIndex);
                 if (pivot - 1 > startIndex) {
-                    sort(a, startIndex, pivot - 1);
+                    sortRec(a, startIndex, pivot - 1);
                 }
                 if (pivot + 1 < endIndex) {
-                    sort(a, pivot + 1, endIndex);
+                    sortRec(a, pivot + 1, endIndex);
                 }
             }
         }
 
         /**
-         * @param <T>        实现了Comparable接口的类型
-         * @param a          待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param startIndex 起始索引
          */
         public static <T extends Comparable<T>> void sortBack(T[] a, int startIndex) {
@@ -500,8 +528,8 @@ public class Sort {
         }
 
         /**
-         * @param <T>      实现了Comparable接口的类型
-         * @param a        待排序数组
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
          * @param endIndex 结束索引
          */
         public static <T extends Comparable<T>> void sortFront(T[] a, int endIndex) {
@@ -510,16 +538,16 @@ public class Sort {
 
         /**
          * @param <T> 实现了Comparable接口的类型
-         * @param a   待排序数组
+         * @param a 待排序数组
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
         }
 
         /**
-         * @param <T>  实现了Comparable接口的类型
-         * @param a    待排序数组
-         * @param low  开始位置
+         * @param <T> 实现了Comparable接口的类型
+         * @param a 待排序数组
+         * @param low 开始位置
          * @param high 终止位置
          * @return 中间元素所在位置
          */
@@ -550,8 +578,8 @@ public class Sort {
      * 比较大小
      *
      * @param <T> 实现了Comparable接口的类型
-     * @param o1  元素1
-     * @param o2  元素2
+     * @param o1 元素1
+     * @param o2 元素2
      * @return 如果o1比o2大或相等，返回true，反之则反
      */
     public static <T extends Comparable<T>> boolean compare(T o1, T o2) {
@@ -562,9 +590,9 @@ public class Sort {
      * 交换数组a的i，j位置元素
      *
      * @param <T> 实现了Comparable接口的类型
-     * @param a   待排序数组
-     * @param i   位置i
-     * @param j   位置j
+     * @param a 待排序数组
+     * @param i 位置i
+     * @param j 位置j
      */
     public static <T> void swap(T[] a, int i, int j) {
         T tmp = a[i];
@@ -576,7 +604,7 @@ public class Sort {
      * 检查传入的数组是否为NULL或数组中是否包含NULL
      *
      * @param <T> 实现了Comparable接口的类型
-     * @param a   待排序数组
+     * @param a 待排序数组
      */
     private static <T> void check(T[] a) {
         if (a == null) {
@@ -593,10 +621,10 @@ public class Sort {
     /**
      * 检查传入的参数是否符合要求
      *
-     * @param <T>        实现了Comparable接口的类型
-     * @param a          待排序数组
+     * @param <T> 实现了Comparable接口的类型
+     * @param a 待排序数组
      * @param startIndex 起始索引
-     * @param endIndex   结束索引
+     * @param endIndex 结束索引
      */
     private static <T> void check(T[] a, int startIndex, int endIndex) {
         if (a.length == 0) {
