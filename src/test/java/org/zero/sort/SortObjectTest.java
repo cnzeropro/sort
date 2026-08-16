@@ -423,7 +423,7 @@ public class SortObjectTest {
 
     @Test
     void sortsThresholdBoundarySizes() {
-        int[] sizes = {0, 1, 2, 14, 15, 16, 17, 31, 32, 33};
+        int[] sizes = {0, 1, 2, 14, 15, 16, 17, 31, 32, 33, 46, 47, 48, 94, 95};
         for (int n : sizes) {
             Integer[] a = randomInts(n, 100);
             Integer[] expected = sortedCopy(a);

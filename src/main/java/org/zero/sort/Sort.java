@@ -332,7 +332,7 @@ public final class Sort {
     }
 
     /**
-     * 快速排序：不稳定，三数取中选枢轴，最好/平均 O(n log n)，最坏 O(n^2)，空间 O(log n)
+     * 快速排序：不稳定，双轴划分（Yaroslavskiy），最好/平均 O(n log n)，最坏 O(n^2)，空间 O(log n)
      * <p>
      * 有序、逆序、全相等输入均不退化。注意：无算法参数的入口 {@code Sort.sort(a)}
      * 使用 Tim 排序而非快速排序。

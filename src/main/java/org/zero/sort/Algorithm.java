@@ -36,7 +36,7 @@ package org.zero.sort;
  *   <li>"全部" = 任意 Comparable/Comparator 对象数组与全部数字原始类型；
  *       "仅积分原始类型" = byte/short/int/long/char；"仅 float/double" = float 与 double。</li>
  *   <li>稳定排序保证相等元素的相对顺序在排序前后保持不变。</li>
- *   <li>{@link #QUICK} 使用三数取中选枢轴并优先递归较小分区，常见输入不退化；
+ *   <li>{@link #QUICK} 使用双轴划分（JDK 双轴快排同款思想），常见输入不退化；
  *       构造性敌手输入仍可触发最坏 O(n^2)。</li>
  *   <li>{@link #TREE} 的对象实现基于红黑树（TreeMap，保证 O(n log n)）；
  *       原始类型实现为朴素二叉搜索树（不装箱的代价），有序输入会退化为 O(n^2)。</li>
@@ -81,7 +81,7 @@ public enum Algorithm {
     MERGE(true, Applicability.ALL),
 
     /**
-     * 快速排序：不稳定；三数取中选枢轴 + Hoare 交叉指针划分 + 小数组回退插入排序；
+     * 快速排序：不稳定；双轴划分（Yaroslavskiy，三取样选双枢轴、相等枢轴回退单轴）+ 小数组回退插入排序；
      * 最好/平均 O(n log n)，最坏 O(n^2)；空间 O(log n)。有序/逆序/全相等输入不退化。
      */
     QUICK(false, Applicability.ALL),

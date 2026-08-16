@@ -22,6 +22,12 @@ final class IntSorts {
     /** Tim 排序的最小 run 长度基准 */
     private static final int TIM_MIN_MERGE = 32;
 
+    /** 双轴快排的插入排序阈值（JDK 同款 47） */
+    private static final int QUICK_INSERTION_THRESHOLD = 47;
+
+    /** Tim 排序进入 galloping 模式的连胜阈值（JDK 同款） */
+    private static final int MIN_GALLOP = 7;
+
     /** 严格大于比较 */
     private static boolean gt(int[] a, int i, int j) {
         return a[i] > a[j];
@@ -175,52 +181,126 @@ final class IntSorts {
     }
 
     /**
-     * 快速排序：不稳定，三数取中 + Hoare 交叉指针 + 小数组回退插入
+     * 快速排序：不稳定，双轴（Yaroslavskiy，与 JDK 双轴快排同款算法思想）
      */
     static void quick(int[] a, int from, int to) {
-        quickRec(a, from, to);
+        quickRec(a, from, to - 1);
     }
 
-    private static void quickRec(int[] a, int from, int to) {
-        int n = to - from;
-        if (n < INSERTION_THRESHOLD) {
-            insertion(a, from, to);
+    /**
+     * 双轴快速排序递归实现（闭区间 [lo, hi]）
+     */
+    private static void quickRec(int[] a, int lo, int hi) {
+        int len = hi - lo + 1;
+        if (len < QUICK_INSERTION_THRESHOLD) {
+            insertion(a, lo, hi + 1);
             return;
         }
-        int mid = from + n / 2;
-        if (gt(a, from, mid)) {
-            swap(a, from, mid);
+        int seventh = (len >> 3) + (len >> 6) + 1;
+        int e3 = (lo + hi) >>> 1;
+        int e2 = e3 - seventh;
+        int e1 = e2 - seventh;
+        int e4 = e3 + seventh;
+        int e5 = e4 + seventh;
+        // 5 元素排序网络
+        if (lt(a, e2, e1)) {
+            swap(a, e1, e2);
         }
-        if (gt(a, from, to - 1)) {
-            swap(a, from, to - 1);
+        if (lt(a, e3, e2)) {
+            swap(a, e2, e3);
         }
-        if (gt(a, mid, to - 1)) {
-            swap(a, mid, to - 1);
+        if (lt(a, e4, e3)) {
+            swap(a, e3, e4);
         }
-        swap(a, from, mid);
-
-        int pivot = a[from];
-        int i = from;
-        int j = to;
-        while (true) {
-            do {
-                i++;
-            } while (ltKey(a, i, pivot));
-            do {
-                j--;
-            } while (gtKey(a, j, pivot));
-            if (i >= j) {
-                break;
+        if (lt(a, e5, e4)) {
+            swap(a, e4, e5);
+        }
+        if (lt(a, e2, e1)) {
+            swap(a, e1, e2);
+        }
+        if (lt(a, e3, e2)) {
+            swap(a, e2, e3);
+        }
+        if (lt(a, e4, e3)) {
+            swap(a, e3, e4);
+        }
+        if (lt(a, e2, e1)) {
+            swap(a, e1, e2);
+        }
+        if (lt(a, e3, e2)) {
+            swap(a, e2, e3);
+        }
+        int pivot1 = a[e2];
+        int pivot2 = a[e4];
+        if (pivot1 != pivot2) {
+            // 保存两端旧值到取样位，避免枢轴落位丢元素
+            a[e2] = a[lo];
+            a[e4] = a[hi];
+            int less = lo;
+            int great = hi;
+            while (a[less + 1] < pivot1) {
+                less++;
             }
-            swap(a, i, j);
-        }
-        swap(a, from, j);
-        if (j - from < to - (j + 1)) {
-            quickRec(a, from, j);
-            quickRec(a, j + 1, to);
+            while (a[great - 1] > pivot2) {
+                great--;
+            }
+            less++;
+            great--;
+            outer:
+            for (int k = less; k <= great; k++) {
+                int ak = a[k];
+                if (ak < pivot1) {
+                    a[k] = a[less];
+                    a[less] = ak;
+                    less++;
+                } else if (ak > pivot2) {
+                    while (a[great] > pivot2) {
+                        if (great-- == k) {
+                            break outer;
+                        }
+                    }
+                    if (a[great] < pivot1) {
+                        a[k] = a[less];
+                        a[less] = a[great];
+                        less++;
+                    } else {
+                        a[k] = a[great];
+                    }
+                    a[great] = ak;
+                    great--;
+                }
+            }
+            a[lo] = a[less - 1];
+            a[less - 1] = pivot1;
+            a[hi] = a[great + 1];
+            a[great + 1] = pivot2;
+            quickRec(a, lo, less - 2);
+            quickRec(a, great + 2, hi);
+            if (less < e1 && e5 < great) {
+                while (a[less] == pivot1) {
+                    less++;
+                }
+                while (a[great] == pivot2) {
+                    great--;
+                }
+            }
+            quickRec(a, less, great);
         } else {
-            quickRec(a, j + 1, to);
-            quickRec(a, from, j);
+            int pivot = a[e3];
+            int ltIdx = lo;
+            int i = lo;
+            int gtIdx = hi;
+            while (i <= gtIdx) {
+                if (ltKey(a, i, pivot)) {
+                    swap(a, ltIdx++, i++);
+                } else if (gtKey(a, i, pivot)) {
+                    swap(a, i, gtIdx--);
+                } else {
+                    i++;
+                }
+            }
+            quickRec(a, lo, ltIdx - 1);
+            quickRec(a, gtIdx + 1, hi);
         }
     }
 
@@ -691,6 +771,14 @@ final class IntSorts {
         }
     }
 
+    /**
+     * 归并 run 栈上相邻的两个 run（i 与 i+1），把栈顶下移一位
+     * <p>
+     * 带 galloping 的稳定归并：单侧连续取胜 MIN_GALLOP 次后切换为指数搜索跳过
+     * 长片段（长相等/有序片段场景下显著减少比较次数，JDK TimSort 同款策略）。
+     *
+     * @return 归并后的 run 栈大小（stackSize - 1）
+     */
     private static int mergeAt(int[] a, int[] tmp, int[] runBase, int[] runLen, int stackSize, int i) {
         int base1 = runBase[i];
         int len1 = runLen[i];
@@ -701,25 +789,228 @@ final class IntSorts {
             runBase[i + 1] = runBase[i + 2];
             runLen[i + 1] = runLen[i + 2];
         }
-        if (!gt(a, base2 - 1, base2)) {
+        // gallop 跳过左 run 头部整体小于右 run 首元素的部分
+        int k = gallopRight(a[base2], a, base1, len1, 0);
+        base1 += k;
+        len1 -= k;
+        if (len1 == 0) {
             return stackSize - 1;
         }
-        System.arraycopy(a, base1, tmp, 0, len1);
+        // gallop 跳过右 run 尾部整体大于左 run 末元素的部分
+        len2 = gallopLeft(a[base1 + len1 - 1], a, base2, len2, len2 - 1);
+        if (len2 == 0) {
+            return stackSize - 1;
+        }
+        // 拷贝较小的一侧到 tmp，另一侧从原数组就地合并（相等取左，稳定）
+        if (len1 <= len2) {
+            System.arraycopy(a, base1, tmp, 0, len1);
+            mergeLo(a, tmp, base1, len1, base2, len2);
+        } else {
+            System.arraycopy(a, base2, tmp, 0, len2);
+            mergeHi(a, tmp, base1, len1, base2, len2);
+        }
+        return stackSize - 1;
+    }
+
+    /**
+     * 左 run 在 tmp（就地回写 a）、右 run 在原数组的 galloping 归并
+     */
+    private static void mergeLo(int[] a, int[] tmp, int base1, int len1, int base2, int len2) {
         int i1 = 0;
         int i2 = base2;
         int k = base1;
         int end2 = base2 + len2;
-        while (i1 < len1 && i2 < end2) {
-            if (ltCross(a, i2, tmp, i1)) {
-                a[k++] = a[i2++];
-            } else {
-                a[k++] = tmp[i1++];
+        int minGallop = MIN_GALLOP;
+        while (true) {
+            int count1 = 0;
+            int count2 = 0;
+            while (i1 < len1 && i2 < end2 && count1 < minGallop && count2 < minGallop) {
+                if (ltCross(a, i2, tmp, i1)) {
+                    a[k++] = a[i2++];
+                    count2++;
+                    count1 = 0;
+                } else {
+                    a[k++] = tmp[i1++];
+                    count1++;
+                    count2 = 0;
+                }
             }
+            if (i1 == len1 || i2 == end2) {
+                break;
+            }
+            int jumped;
+            if (count1 >= minGallop) {
+                jumped = gallopRight(a[i2], tmp, i1, len1 - i1, 0);
+                System.arraycopy(tmp, i1, a, k, jumped);
+                i1 += jumped;
+                k += jumped;
+            } else {
+                jumped = gallopLeft(tmp[i1], a, i2, end2 - i2, 0);
+                System.arraycopy(a, i2, a, k, jumped);
+                i2 += jumped;
+                k += jumped;
+            }
+            if (i1 == len1 || i2 == end2) {
+                break;
+            }
+            minGallop++;
         }
         while (i1 < len1) {
             a[k++] = tmp[i1++];
         }
-        return stackSize - 1;
+    }
+
+    /**
+     * 右 run 在 tmp、左 run 在原数组的 galloping 归并（从右往左回写，保证稳定）
+     */
+    private static void mergeHi(int[] a, int[] tmp, int base1, int len1, int base2, int len2) {
+        int i1 = base1 + len1 - 1;
+        int i2 = len2 - 1;
+        int k = base2 + len2 - 1;
+        int start1 = base1;
+        int minGallop = MIN_GALLOP;
+        while (true) {
+            int count1 = 0;
+            int count2 = 0;
+            while (i1 >= start1 && i2 >= 0 && count1 < minGallop && count2 < minGallop) {
+                if (gtCross(tmp, i2, a, i1)) {
+                    a[k--] = tmp[i2--];
+                    count2++;
+                    count1 = 0;
+                } else {
+                    a[k--] = a[i1--];
+                    count1++;
+                    count2 = 0;
+                }
+            }
+            if (i1 < start1 || i2 < 0) {
+                break;
+            }
+            int jumped;
+            if (count1 >= minGallop) {
+                jumped = i1 - start1 + 1 - gallopRight(tmp[i2], a, start1, i1 - start1 + 1, i1 - start1);
+                while (jumped-- > 0) {
+                    a[k--] = a[i1--];
+                }
+            } else {
+                jumped = i2 + 1 - gallopLeft(a[i1], tmp, 0, i2 + 1, i2);
+                while (jumped-- > 0) {
+                    a[k--] = tmp[i2--];
+                }
+            }
+            if (i1 < start1 || i2 < 0) {
+                break;
+            }
+            minGallop++;
+        }
+        while (i2 >= 0) {
+            a[k--] = tmp[i2--];
+        }
+    }
+
+    /**
+     * gallopRight：在已排序区间 a[base, base+len) 中返回第一个 &gt; key 的位置
+     */
+    private static int gallopRight(int key, int[] a, int base, int len, int hint) {
+        int lastOfs = 0;
+        int ofs = 1;
+        if (ltKey(a, base + hint, key)) {
+            // 向后 gallop：key > a[hint]，找第一个 > key 的位置
+            int maxOfs = len - hint;
+            while (ofs < maxOfs && ltKey(a, base + hint + ofs, key)) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0) {
+                    ofs = maxOfs;
+                }
+            }
+            if (ofs > maxOfs) {
+                ofs = maxOfs;
+            }
+            lastOfs += hint;
+            ofs += hint;
+        } else {
+            // 向前 gallop：key <= a[hint]
+            int maxOfs = hint + 1;
+            while (ofs < maxOfs && !ltKey(a, base + hint - ofs, key)) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0) {
+                    ofs = maxOfs;
+                }
+            }
+            if (ofs > maxOfs) {
+                ofs = maxOfs;
+            }
+            int tmpOfs = lastOfs;
+            lastOfs = hint - ofs;
+            ofs = hint - tmpOfs;
+        }
+        lastOfs++;
+        while (lastOfs < ofs) {
+            int m = lastOfs + ((ofs - lastOfs) >>> 1);
+            if (ltKey(a, base + m, key)) {
+                lastOfs = m + 1;
+            } else {
+                ofs = m;
+            }
+        }
+        return ofs;
+    }
+
+    /**
+     * gallopLeft：在已排序区间 a[base, base+len) 中返回第一个 &gt;= key 的位置
+     */
+    private static int gallopLeft(int key, int[] a, int base, int len, int hint) {
+        int lastOfs = 0;
+        int ofs = 1;
+        if (ltKey(a, base + hint, key)) {
+            // 向后 gallop：key > a[hint]
+            int maxOfs = len - hint;
+            while (ofs < maxOfs && ltKey(a, base + hint + ofs, key)) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0) {
+                    ofs = maxOfs;
+                }
+            }
+            if (ofs > maxOfs) {
+                ofs = maxOfs;
+            }
+            lastOfs += hint;
+            ofs += hint;
+        } else {
+            // 向前 gallop：key <= a[hint]
+            int maxOfs = hint + 1;
+            while (ofs < maxOfs && !ltKey(a, base + hint - ofs, key)) {
+                lastOfs = ofs;
+                ofs = (ofs << 1) + 1;
+                if (ofs <= 0) {
+                    ofs = maxOfs;
+                }
+            }
+            if (ofs > maxOfs) {
+                ofs = maxOfs;
+            }
+            int tmpOfs = lastOfs;
+            lastOfs = hint - ofs;
+            ofs = hint - tmpOfs;
+        }
+        lastOfs++;
+        while (lastOfs < ofs) {
+            int m = lastOfs + ((ofs - lastOfs) >>> 1);
+            if (ltKey(a, base + m, key)) {
+                lastOfs = m + 1;
+            } else {
+                ofs = m;
+            }
+        }
+        return ofs;
+    }
+
+    /** 跨数组严格大于：a[i] &gt; b[j] */
+    private static boolean gtCross(int[] a, int i, int[] b, int j) {
+        return ltCross(b, j, a, i);
     }
 
     /**
@@ -738,7 +1029,7 @@ final class IntSorts {
             }
         }
         if (inversions < n / 8) {
-            merge(a, from, to);
+            tim(a, from, to);
         } else {
             quick(a, from, to);
         }
