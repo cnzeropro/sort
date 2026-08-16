@@ -1,3 +1,5 @@
+package org.zero.sort;
+
 /**
  * 排序算法类
  * <p>
@@ -217,13 +219,6 @@ public class Sort {
                 for (int j = i; j > startIndex && compare(a[j - 1], a[j]); j--) {
                     swap(a, j - 1, j);
                 }
-//				for (int j = i; j > startIndex; j--) {
-//					if (compare(a[j - 1], a[j])) {
-//						swap(a, j - 1, j);
-//					} else {
-//						break;
-//					}
-//				}
             }
         }
 
@@ -295,13 +290,6 @@ public class Sort {
                     for (int j = i; (j >= startIndex + increment) && compare(a[j - increment], a[j]); j -= increment) {
                         swap(a, j - increment, j);
                     }
-//					for (int j = i; j >= startIndex + increment; j -= increment) {
-//						if (compare(a[j - increment], a[j])) {
-//							swap(a, j - increment, j);
-//						} else {
-//							break;
-//						}
-//					}
                 }
                 increment /= 2;
             }
@@ -333,6 +321,18 @@ public class Sort {
          */
         public static <T extends Comparable<T>> void sort(T[] a) {
             sortBack(a, 0);
+        }
+
+        /**
+         * 普通增量序列的希尔排序（对整个数组排序）
+         *
+         * @param <T> 实现了Comparable接口的类型
+         * @param a   待排序数组
+         */
+        public static <T extends Comparable<T>> void generalSort(T[] a) {
+            check(a);
+
+            generalSort(a, 0, a.length - 1);
         }
 
         /**
@@ -543,21 +543,6 @@ public class Sort {
             a[low] = key;
             // 跳出循环时low和high相等，此时的low或high就是tmp的正确索引位置
             return low;
-
-//            while (low < high) {
-//                while (low < high && compare(a[high], key)) {
-//                    high--;
-//                }
-//                while (low < high && compare(key, a[low])) {
-//                    low++;
-//                }
-//                if (a[low].equals(a[high]) && low < high) {
-//                    low++;
-//                } else {
-//                    swap(a, low, high);
-//                }
-//            }
-//            return low;
         }
     }
 
@@ -595,12 +580,12 @@ public class Sort {
      */
     private static <T> void check(T[] a) {
         if (a == null) {
-            throw new IllegalArgumentException("禁止对未分配内存的数组排序！！！(数组为NULL)");
+            throw new IllegalArgumentException("Array must not be null");
         }
 
         for (int i = 0; i < a.length; i++) {
             if (a[i] == null) {
-                throw new IllegalArgumentException("无法对缺值数组排序！！！（数组中包含NULL）");
+                throw new IllegalArgumentException("Array must not contain null elements");
             }
         }
     }
@@ -615,19 +600,19 @@ public class Sort {
      */
     private static <T> void check(T[] a, int startIndex, int endIndex) {
         if (a.length == 0) {
-            throw new IllegalArgumentException("禁止对空数组排序！！！(数组长度为0)");
+            throw new IllegalArgumentException("Empty array is not supported");
         }
 
         if (startIndex < 0) {
-            throw new IllegalArgumentException("起始索引需大于0！！！");
+            throw new IllegalArgumentException("startIndex must be >= 0");
         }
 
         if (endIndex >= a.length) {
-            throw new IllegalArgumentException("结束索引需小于数组长度！！！");
+            throw new IllegalArgumentException("endIndex must be < array length");
         }
 
         if (startIndex > endIndex) {
-            throw new IllegalArgumentException("起始索引需小于或等于结束索引！！！");
+            throw new IllegalArgumentException("startIndex must be <= endIndex");
         }
     }
 }
