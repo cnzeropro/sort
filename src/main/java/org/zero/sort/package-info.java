@@ -1,35 +1,31 @@
 /**
- * 经典排序算法的 Java 工具库
+ * 经典排序算法工具类库：21 种算法按算法划分为独立类，另含自动选择算法的门面类。
  * <p>
- * 提供六大经典排序算法（冒泡、选择、插入、希尔、归并、快速排序）的统一实现，
- * 支持任意 {@link java.lang.Comparable} 对象数组与全部数字原始类型
- * （byte / short / int / long / float / double / char）。
- *
- * <h2>核心入口</h2>
+ * <b>按算法组织</b>：每种算法一个类，类内提供全类型重载——
  * <ul>
- *   <li>{@link org.zero.sort.Sort}：静态工具方法门面，{@code Sort.sort(a)} 一行排序；
- *       对象数组提供 {@code quickSort}/{@code mergeSort} 等命名便捷方法；</li>
- *   <li>{@link org.zero.sort.Algorithm}：排序算法枚举，可通过 {@code Sort.sort(a, Algorithm.MERGE)}
- *       以编程方式指定算法。</li>
+ *   <li>17 种比较类算法（{@link org.zero.sort.BubbleSort 冒泡}、{@link org.zero.sort.SelectionSort 选择}、
+ *       {@link org.zero.sort.InsertionSort 插入}、{@link org.zero.sort.ShellSort 希尔}、
+ *       {@link org.zero.sort.MergeSort 归并}、{@link org.zero.sort.QuickSort 快速}、
+ *       {@link org.zero.sort.HeapSort 堆}、{@link org.zero.sort.TimSort Tim}、
+ *       {@link org.zero.sort.CombSort 梳}、{@link org.zero.sort.GnomeSort 地精}、
+ *       {@link org.zero.sort.CocktailSort 鸡尾酒}、{@link org.zero.sort.CycleSort 循环}、
+ *       {@link org.zero.sort.OddEvenSort 奇偶}、{@link org.zero.sort.PancakeSort 煎饼}、
+ *       {@link org.zero.sort.StoogeSort 臭皮匠}、{@link org.zero.sort.BitonicSort 双调}、
+ *       {@link org.zero.sort.TreeSort 树}）：支持 {@code Comparable} 对象数组 / {@code List}、
+ *       {@code Comparator} 对象数组 / {@code List}，以及全部 7 种数字原始类型；</li>
+ *   <li>3 种整数专用算法（{@link org.zero.sort.CountingSort 计数}、{@link org.zero.sort.RadixSort 基数}、
+ *       {@link org.zero.sort.PigeonholeSort 鸽巢}）：支持 byte / short / int / long / char；</li>
+ *   <li>1 种浮点专用算法（{@link org.zero.sort.BucketSort 桶}）：支持 float / double。</li>
  * </ul>
- *
- * <h2>区间约定</h2>
- * 所有带索引参数的方法遵循 JDK 惯例：区间为 <b>[fromIndex, toIndex)</b> 左闭右开。
- *
- * <h2>异常约定</h2>
- * 与 {@link java.util.Arrays} 一致：空数组合法；null 数组与区间内 null 元素抛
- * {@link java.lang.NullPointerException}；非法索引抛 {@link java.lang.IndexOutOfBoundsException}。
- *
- * <h2>Java 版本</h2>
- * 最低支持 Java 8；以 Multi-Release JAR 打包，Java 9+ 运行时自动加载版本化类
- * （JEP 238），各版本行为完全一致。
- *
- * <h2>原始类型实现</h2>
- * 包内的原始类型特化实现（{@code IntSorts}、{@code DoubleSorts} 等，包私有）为
- * 手工维护代码，与对象数组版算法（{@code GenericSorts}）行为一致。
+ * 每个类型统一提供三种形态：{@code sort(a)} 全量、{@code sort(a, fromIndex)} 从某位置到末尾、
+ * {@code sort(a, fromIndex, toIndex)} 区间 [fromIndex, toIndex)。
+ * <p>
+ * <b>自动选择</b>：{@link org.zero.sort.Sort} 门面类不指定算法，与 JDK {@code Arrays.sort} 同理念，
+ * 根据数据结构与长度自适应选择（对象走稳定 Tim 排序；原始类型小数组插入、近有序 Tim、否则双轴快排）。
+ * <p>
+ * 比较语义与 JDK 一致：float / double 使用全序（NaN 最后、-0.0 &lt; 0.0），
+ * char 按无符号 16 位整数序，其余整数类型按有符号自然序。
  *
  * @author Zero
- * @see org.zero.sort.Sort
- * @see org.zero.sort.Algorithm
  */
 package org.zero.sort;

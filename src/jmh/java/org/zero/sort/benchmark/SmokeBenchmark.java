@@ -11,8 +11,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-import org.zero.sort.Algorithm;
-import org.zero.sort.Sort;
+import org.zero.sort.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +46,7 @@ public class SmokeBenchmark {
     @Benchmark
     public int[] quickSort() {
         System.arraycopy(data, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.QUICK);
+        QuickSort.sort(scratch);
         return scratch;
     }
 }

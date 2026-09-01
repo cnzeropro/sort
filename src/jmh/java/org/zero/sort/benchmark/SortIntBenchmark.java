@@ -14,8 +14,7 @@ import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
-import org.zero.sort.Algorithm;
-import org.zero.sort.Sort;
+import org.zero.sort.*;
 
 /**
  * int[] 排序基准：全部适用算法 × 5 种输入形态，另含默认自适应策略与
@@ -152,77 +151,77 @@ public class SortIntBenchmark {
     @Benchmark
     public int[] shell() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.SHELL);
+        ShellSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] merge() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.MERGE);
+        MergeSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] quick() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.QUICK);
+        QuickSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] heap() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.HEAP);
+        HeapSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] tim() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.TIM);
+        TimSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] comb() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.COMB);
+        CombSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] bitonic() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.BITONIC);
+        BitonicSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] tree() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.TREE);
+        TreeSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] counting() {
         System.arraycopy(pristineBounded, 0, scratchBounded, 0, N);
-        Sort.sort(scratchBounded, Algorithm.COUNTING);
+        CountingSort.sort(scratchBounded);
         return scratchBounded;
     }
 
     @Benchmark
     public int[] radix() {
         System.arraycopy(pristine, 0, scratch, 0, N);
-        Sort.sort(scratch, Algorithm.RADIX);
+        RadixSort.sort(scratch);
         return scratch;
     }
 
     @Benchmark
     public int[] pigeonhole() {
         System.arraycopy(pristineBounded, 0, scratchBounded, 0, N);
-        Sort.sort(scratchBounded, Algorithm.PIGEONHOLE);
+        PigeonholeSort.sort(scratchBounded);
         return scratchBounded;
     }
 
@@ -246,56 +245,56 @@ public class SortIntBenchmark {
     @Benchmark
     public int[] bubble() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.BUBBLE);
+        BubbleSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] selection() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.SELECTION);
+        SelectionSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] insertion() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.INSERTION);
+        InsertionSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] gnome() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.GNOME);
+        GnomeSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] cocktail() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.COCKTAIL);
+        CocktailSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] oddEven() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.ODD_EVEN);
+        OddEvenSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] cycle() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.CYCLE);
+        CycleSort.sort(scratchSmall);
         return scratchSmall;
     }
 
     @Benchmark
     public int[] pancake() {
         System.arraycopy(pristineSmall, 0, scratchSmall, 0, SMALL_N);
-        Sort.sort(scratchSmall, Algorithm.PANCAKE);
+        PancakeSort.sort(scratchSmall);
         return scratchSmall;
     }
 
@@ -304,7 +303,7 @@ public class SortIntBenchmark {
     @Benchmark
     public int[] stooge() {
         System.arraycopy(pristineTiny, 0, scratchTiny, 0, TINY_N);
-        Sort.sort(scratchTiny, Algorithm.STOOGE);
+        StoogeSort.sort(scratchTiny);
         return scratchTiny;
     }
 }
