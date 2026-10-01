@@ -1,9 +1,11 @@
-# 统一行尾：仓库内文本一律 LF（与 tools/gen-primitives.py 的 utf-8/LF 输出保持一致）
-*.java text eol=lf
-*.xml text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.md text eol=lf
-*.py text eol=lf
-*.properties text eol=lf
-*.sh text eol=lf
+# 文本文件自动识别并统一以 LF 存入仓库
+* text=auto eol=lf
+
+# Java 源码启用 Git 内置 diff 驱动
+*.java text diff=java
+
+# 脚本 / wrapper / 钩子固定 LF
+mvnw text eol=lf
+
+# Windows 批处理必须 CRLF（cmd.exe 兼容）
+*.cmd text eol=crlf
